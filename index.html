@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Algorithmic Music Composition</title>
+    <h1 style="text-align:center">How does your file sound sounds like?</h1>
+    <div id="waveform"></div>
+    <div id="dropzone">Drop file here</div>
+    <div id="btn"> 
+    <button onclick="playNotesSequentially(notes)">listen</button>
+    </div>
+    <div id="note">You're listening to: </div>
+    <div id="fileContent"></div>
+    <script src="https://tonejs.github.io/build/Tone.js"></script>
+    <script src="https://netart.rocks/notes/web-audio/ex/helpers/wave-canvas.js"></script>
+
+    
+</head>
+<body>
+    <style>
+        #dropzone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+}
+#note{
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+  font-size:xx-large
+}
+#btn{
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+  
+}
+
+.highlight {
+  background-color: #f2f2f2;
+}
+    </style>
+    
+    <div>
+        <label>Set your Tempo:</label>
+        <input type="number" id="tempoInput" value="120" min="20" max="300">
+    </div>
+       
+    <script>
+
+        function playComposition() {
+            var key = document.getElementById('keySelect').value;
+            var tempo = document.getElementById('tempoInput').value;
+            var range = document.getElementById('rangeInput').value;
+            var notes = generateMelody(key, range);
+            var time = Tone.now();
+
+            notes.forEach(note => {
+                synth.triggerAttackRelease(note, '8n', time);
+                time += Tone.Time('8n').toSeconds();
+            });
+        }
+        function calcNote (rootFreq, num) {    
+            const majorScale = [0, 2, 4, 5, 7, 9, 11, 12]
+            const tr2 = Math.pow(2, 1/12) // the twelth root of 2
+            const n = majorScale[num]
+            const freq = rootFreq * Math.pow(tr2, n)
+            return freq
+        }
+
+    const root = 264 // middle C
+    const keyDown = {}
+    const synth = new Tone.PolySynth().toDestination()
+    synth.set({ oscillator: { type: 'sine' } }) 
+
+    window.addEventListener('keydown', (e) => {
+        console.log("Enter")
+        // console.log(notes.head())
+
+});
+  let colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet", "pink"];
+  let colour_list = [];
+
+
+  function playNotesSequentially() {
+    console.log("Colour_list",colour_list)
+    
+  
+    notes.forEach((note, index) => {
+    setTimeout(() => {
+      listenContentDiv.innerHTML = note
+      console.log(colour_list[index])
+      document.body.style.backgroundColor = colour_list[index]
+      
+      synth.triggerAttackRelease(note, Tone.now(),0.5); // Trigger attack for current note
+    }, index * 500); // Schedule note to play after a delay
+    
+  });
+}
+  
+  
+    // visualization
+  const toneFFT = new Tone.FFT()
+  synth.connect(toneFFT)
+  // see https://netart.rocks/notes/web-audio/ex/helpers/wave-canvas.js
+  createWaveCanvas({
+    element:'#waveform',
+    analyser: toneFFT.output._analysers[0]._nativeAnalyserNode,
+    speed: 1000/60, // optional, interval speed
+    fill: '#000', // optional, background color
+    stroke: '#fff' // optional, wave line color
+  })
+
+    const dropzone = document.getElementById('dropzone');
+    const fileContentDiv = document.getElementById('fileContent');
+    const listenContentDiv = document.getElementById('note');
+
+    let melody = [];
+    let notes = [];
+
+
+    // Prevent default drag behaviors
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropzone.addEventListener(eventName, preventDefaults, false)
+});
+
+// Highlight dropzone when a file is dragged over it
+['dragenter', 'dragover'].forEach(eventName => {
+  dropzone.addEventListener(eventName, highlight, false)
+});
+
+// Remove highlight when a file is dragged away from the dropzone
+['dragleave', 'drop'].forEach(eventName => {
+  dropzone.addEventListener(eventName, unhighlight, false)
+});
+
+// Handle dropped files
+dropzone.addEventListener('drop', handleDrop, false);
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function highlight(e) {
+  dropzone.classList.add('highlight');
+}
+
+function unhighlight(e) {
+  dropzone.classList.remove('highlight');
+}
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles(files);
+}
+
+
+
+function handleFiles(files) {
+  const file = files[0];
+  const reader = new FileReader();
+  reader.readAsBinaryString(file);
+  reader.onload = function() {
+    const fileContent = reader.result;
+    const numberArray = mapToNumbers(fileContent);
+    melody = numberArray
+    fileContentDiv.innerHTML = fileContent
+    console.log(melody)
+    melody.forEach(note => {
+    if (note)
+    {
+        notes.push(calcNote(root, note))
+        colour_list.push(colors[note-1])
+    }
+})
+    console.log(colour_list)
+  };
+}
+function mapToNumbers(binaryContent) {
+  const maxNumber = 7;
+  const binaryStringLength = binaryContent.length;
+  const numberArray = [];
+
+  for (let i = 0; i < binaryStringLength; i++) {
+    const binaryValue = binaryContent.charCodeAt(i).toString(2);
+    const decimalValue = parseInt(binaryValue, 2);
+    const mappedValue = Math.ceil(decimalValue * maxNumber / 255);
+    numberArray.push(mappedValue);
+  }
+
+  return numberArray;
+}
+
+
+    </script>
+</body>
+</html>
