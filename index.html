@@ -5,16 +5,15 @@
     <title>Algorithmic Music Composition</title>
     <h1 style="text-align:center">How does your file sound sounds like?</h1>
     <div id="waveform"></div>
-    <div id="dropzone">Drop file here</div>
+    <div id="dropzone">Drop file here and press 'a' and then press listen</div>
     <div id="btn"> 
     <button onclick="playNotesSequentially(notes)">listen</button>
     </div>
-    <div id="note">You're listening to: </div>
+    <div id="note">your files looks like this</div>
     <div id="fileContent"></div>
     <script src="https://tonejs.github.io/build/Tone.js"></script>
     <script src="https://netart.rocks/notes/web-audio/ex/helpers/wave-canvas.js"></script>
 
-    
 </head>
 <body>
     <style>
@@ -165,7 +164,7 @@ function handleFiles(files) {
   reader.onload = function() {
     const fileContent = reader.result;
     const numberArray = mapToNumbers(fileContent);
-    melody = numberArray
+    melody = numberArray.splice(0,100)
     fileContentDiv.innerHTML = fileContent
     console.log(melody)
     melody.forEach(note => {
