@@ -3,21 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Algorithmic Music Composition</title>
-    <h1 style="text-align:center">How does your file sound sounds like?</h1>
-    <div id="waveform"></div>
-    <div id="dropzone">Drop file here and press 'a' and then press listen</div>
-    <div id="btn"> 
-    <button onclick="playNotesSequentially(notes)">listen</button>
-    </div>
-    <div id="note">your files looks like this</div>
-    <div id="fileContent"></div>
+   
     <script src="https://tonejs.github.io/build/Tone.js"></script>
     <script src="https://netart.rocks/notes/web-audio/ex/helpers/wave-canvas.js"></script>
 
 </head>
-<body>
-    <style>
-        #dropzone {
+<!-- This portion sets out the layout of the html page --> 
+<body style=" background-color: #30a88c;">
+  <h1 style="text-align:center">How does your file sound sounds like?</h1>
+  <div id="waveform"></div>
+  <div id="dropzone" style="font-size: xx-large;">Drop file here and press 'a' and then press listen</div>
+  <div id="btn"> 
+  <button onclick="playNotesSequentially(notes)">listen</button>
+  </div>
+  <div id="note">your files looks like this</div>
+  <div id="fileContent"></div>
+</body>
+
+<!-- This portion sets out the css for the html page --> 
+<style>
+  
+#dropzone {
   border: 2px dashed #ccc;
   padding: 20px;
   text-align: center;
@@ -35,70 +41,58 @@
   
 }
 
+
 .highlight {
   background-color: #f2f2f2;
 }
-    </style>
-    
-    <div>
-        <label>Set your Tempo:</label>
-        <input type="number" id="tempoInput" value="120" min="20" max="300">
-    </div>
+
+</style>
+
        
-    <script>
+<script>
+// Calculates the note of a note given the root frequency and the note number
+  function calcNote (rootFreq, num) {    
+      const majorScale = [0, 2, 4, 5, 7, 9, 11, 12]
+      const tr2 = Math.pow(2, 1/12) // the twelth root of 2
+      const n = majorScale[num]
+      const freq = rootFreq * Math.pow(tr2, n)
+      return freq
+  }
 
-        function playComposition() {
-            var key = document.getElementById('keySelect').value;
-            var tempo = document.getElementById('tempoInput').value;
-            var range = document.getElementById('rangeInput').value;
-            var notes = generateMelody(key, range);
-            var time = Tone.now();
+  const root = 264 
+  const keyDown = {}
+  const synth = new Tone.PolySynth().toDestination()
+  synth.set({ oscillator: { type: 'sine' } }) 
 
-            notes.forEach(note => {
-                synth.triggerAttackRelease(note, '8n', time);
-                time += Tone.Time('8n').toSeconds();
-            });
-        }
-        function calcNote (rootFreq, num) {    
-            const majorScale = [0, 2, 4, 5, 7, 9, 11, 12]
-            const tr2 = Math.pow(2, 1/12) // the twelth root of 2
-            const n = majorScale[num]
-            const freq = rootFreq * Math.pow(tr2, n)
-            return freq
-        }
-
-    const root = 264 // middle C
-    const keyDown = {}
-    const synth = new Tone.PolySynth().toDestination()
-    synth.set({ oscillator: { type: 'sine' } }) 
-
-    window.addEventListener('keydown', (e) => {
-        console.log("Enter")
-        // console.log(notes.head())
-
-});
-  let colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet", "pink"];
-  let colour_list = [];
-
-
-  function playNotesSequentially() {
-    console.log("Colour_list",colour_list)
-    
+// Funtion to play notes sequentially but also to play the notes at different 
+// octaves on every 3rd, 25th and 50th note
   
+function playNotesSequentially() {
+    now = Tone.now()
+
     notes.forEach((note, index) => {
-    setTimeout(() => {
-      listenContentDiv.innerHTML = note
-      console.log(colour_list[index])
-      document.body.style.backgroundColor = colour_list[index]
-      
-      synth.triggerAttackRelease(note, Tone.now(),0.5); // Trigger attack for current note
-    }, index * 500); // Schedule note to play after a delay
-    
-  });
+
+        synth.triggerAttackRelease(note,"8n",now + index/2); // Trigger attack for current note
+        if (index%3 == 0)
+        {
+          console.log("Note",note/2);
+          synth.triggerAttackRelease(note/2,"1n",now + index/2 + 5)
+        }
+        if (index%25 == 0)
+        {
+          console.log("Note",note/2);
+          synth.triggerAttackRelease(note/4,"1n",now + index/2 + 5)
+        }
+        if (index%50 == 0)
+        {
+          console.log("Note",note/2);
+          synth.triggerAttackRelease(note/8,"1n",now + index/2 + 5)
+        }
+    });
 }
   
   
-    // visualization
+  // This portion is to create the waveform of the audio file
   const toneFFT = new Tone.FFT()
   synth.connect(toneFFT)
   // see https://netart.rocks/notes/web-audio/ex/helpers/wave-canvas.js
@@ -117,6 +111,10 @@
     let melody = [];
     let notes = [];
 
+
+
+// This portion is to add the functionality to drop the file into the dropzone
+// Used ChatGPT for this portion
 
     // Prevent default drag behaviors
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -156,7 +154,8 @@ function handleDrop(e) {
 }
 
 
-
+// This portion is to read the bionary file contents and map it to numbers
+// using those numbers to get calculate the notes and add the notes to the notes array
 function handleFiles(files) {
   const file = files[0];
   const reader = new FileReader();
@@ -169,14 +168,18 @@ function handleFiles(files) {
     console.log(melody)
     melody.forEach(note => {
     if (note)
-    {
+      {
         notes.push(calcNote(root, note))
-        colour_list.push(colors[note-1])
-    }
-})
-    console.log(colour_list)
+      }
+    })
   };
 }
+
+// This portion defines the function that maps the binary file contents to numbers
+// The mapping is done by multiplying the decimal value by a constant "maxNumber"
+// (which is set to 7) and dividing by 255, and then rounding up to the nearest 
+//integer using the Math.ceil() method. This ensures that the mapped value falls
+// within the desired range of 1 to 7.
 function mapToNumbers(binaryContent) {
   const maxNumber = 7;
   const binaryStringLength = binaryContent.length;
@@ -193,6 +196,5 @@ function mapToNumbers(binaryContent) {
 }
 
 
-    </script>
-</body>
+</script>
 </html>
