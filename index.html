@@ -66,29 +66,54 @@
 
 // Funtion to play notes sequentially but also to play the notes at different 
 // octaves on every 3rd, 25th and 50th note
-  
+
+
+let spans = [];
+
+
+// Function to toggle the 'highlight' class on the spans
+function toggleHighlight() {
+  console.log("Toggling highlight");
+  Array.from(spans).forEach((span, index) => {
+    setTimeout(() => {
+      span.classList.toggle('highlight');
+    }, index * 500); // Adjust the delay (in milliseconds) between highlights if desired
+  });
+}
+
+
+
 function playNotesSequentially() {
+    console.log("Playing notes sequentially");
+    highlight();
+    console.log("DONE");
     now = Tone.now()
+    Tone.start();
+    toggleHighlight();
 
     notes.forEach((note, index) => {
+       
+        synth.triggerAttackRelease(note,"8n",now + index/2,0.5); // Trigger attack for current note
+        
 
-        synth.triggerAttackRelease(note,"8n",now + index/2); // Trigger attack for current note
         if (index%3 == 0)
         {
-          console.log("Note",note/2);
-          synth.triggerAttackRelease(note/2,"1n",now + index/2 + 5)
+          // console.log("Note", note/2);
+          synth.triggerAttackRelease(note/2,"1n",now + index/2 + 5,0.5)
         }
         if (index%25 == 0)
         {
-          console.log("Note",note/2);
-          synth.triggerAttackRelease(note/4,"1n",now + index/2 + 5)
+          // console.log("Note",note/2);
+          synth.triggerAttackRelease(note/4,"1n",now + index/2 + 5,0.5)
         }
         if (index%50 == 0)
         {
-          console.log("Note",note/2);
-          synth.triggerAttackRelease(note/8,"1n",now + index/2 + 5)
+          // console.log("Note",note/2);
+          synth.triggerAttackRelease(note/8,"1n",now + index/2 + 5,0.5)
         }
     });
+    
+    
 }
   
   
@@ -104,12 +129,12 @@ function playNotesSequentially() {
     stroke: '#fff' // optional, wave line color
   })
 
-    const dropzone = document.getElementById('dropzone');
-    const fileContentDiv = document.getElementById('fileContent');
-    const listenContentDiv = document.getElementById('note');
+  const dropzone = document.getElementById('dropzone');
+  const fileContentDiv = document.getElementById('fileContent');
+  const listenContentDiv = document.getElementById('note');
 
-    let melody = [];
-    let notes = [];
+  let melody = [];
+  let notes = [];
 
 
 
@@ -160,12 +185,20 @@ function handleFiles(files) {
   const file = files[0];
   const reader = new FileReader();
   reader.readAsBinaryString(file);
+  
   reader.onload = function() {
     const fileContent = reader.result;
+    const binaryContent = Array.from(fileContent)
+                      .map(char => char.charCodeAt(0).toString(2))
+                      .map(byte => `<span style="font-size: xx-large;">${byte}</span>`)
+                      .join(' ')
+
+    
+    // console.log(binaryContent);
     const numberArray = mapToNumbers(fileContent);
-    melody = numberArray.splice(0,100)
-    fileContentDiv.innerHTML = fileContent
-    console.log(melody)
+    melody = numberArray.splice(0,1000)
+    fileContentDiv.innerHTML = binaryContent
+    // console.log(melody)
     melody.forEach(note => {
     if (note)
       {
@@ -173,6 +206,9 @@ function handleFiles(files) {
       }
     })
   };
+  spans = fileContentDiv.getElementsByTagName('span');
+  console.log(spans);
+
 }
 
 // This portion defines the function that maps the binary file contents to numbers
